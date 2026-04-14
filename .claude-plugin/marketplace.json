@@ -1,0 +1,12 @@
+{
+  "name": "stts-marketplace",
+  "owner": { "name": "Sandip Chitale" },
+  "plugins": [
+    {
+      "name": "stts",
+      "source": "./", 
+      "description": "Local development version of stts claude plugin",
+      "version": "1.0.0"
+    }
+  ]
+}

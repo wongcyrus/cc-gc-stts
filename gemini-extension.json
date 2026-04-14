@@ -1,0 +1,12 @@
+{
+  "name": "stts",
+  "description": "Talk to gemini cli and hear gemini cli talk back.",
+  "version": "1.0.0",
+  "mcpServers": {
+    "stts": {
+      "command": "node",
+      "args": ["${extensionPath}/dist/stts-mcp-server.mjs"],
+      "cwd": "${extensionPath}"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "stts",
+    "description": "Talk to Claude and hear Claude talk back.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Sandip Chitale"
+    },
+    "commands": "./commands",
+    "mcpServers": {
+        "stts-mcp": {
+        "type": "stdio",
+        "command": "node",
+        "args": ["${CLAUDE_PLUGIN_ROOT}/dist/stts-mcp-server.mjs"]
+    }
+  }
+}
