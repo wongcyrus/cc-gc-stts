@@ -14,6 +14,7 @@ await build({
   format: 'esm',
   target: 'node18',
   outdir,
+  minify: true,
   outExtension: { '.js': '.mjs' },
   banner: {
     js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
