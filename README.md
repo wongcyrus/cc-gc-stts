@@ -51,6 +51,12 @@ dist/                  # built artifacts loaded by the plugin at runtime
   - `tts` — spawns `dist/stts.mjs tts --oneshot`, piping the text to speak via stdin; the window speaks it and exits.
 - The `/stts` command orchestrates a loop: call `stt`, if the result is empty print `Done.` and stop; otherwise forward the transcript to the model and pass the reply to `tts`.
 
+## Voice commands
+
+Show the Voice command side panel to show all the special phases that trigger voice commands.
+
+![Voice command side panel](screenshots/voice-commands.png)
+
 ## Build
 
 ```bash
