@@ -866,8 +866,8 @@
         window.onkeydown = (e) => {
           if (e.ctrlKey && e.key === 'r') {
             e.preventDefault();
-            if (currentMode === 'tts' && ttsToogleDictation) {
-              ttsToogleDictation();
+            if (currentMode === 'tts' && ttsToggleDictation) {
+              ttsToggleDictation();
             } else {
               toggleDictation();
             }
@@ -877,7 +877,7 @@
             if (ttsCommandsPanel.classList.contains('open')) {
               ttsCommandsPanel.classList.remove('open');
             } else if (ttsIsRecording) {
-              try { ttsToogleDictation(); } catch {}
+              try { ttsToggleDictation(); } catch {}
             } else {
               gotitBtn.click();
             }
@@ -966,7 +966,7 @@
       const ttsClosed = document.getElementById('tts-close-panel');
 
       let ttsIsRecording = false;
-      let ttsToogleDictation = () => {};
+      let ttsToggleDictation = () => {};
 
       const synth = window.speechSynthesis;
       let currentUtterance = null;
@@ -1012,7 +1012,7 @@
         ttsRecognition.continuous = true;
         ttsRecognition.interimResults = true;
 
-        ttsToogleDictation = () => {
+        ttsToggleDictation = () => {
           if (ttsIsRecording) {
             ttsRecognition.stop();
           } else {
@@ -1021,7 +1021,7 @@
         };
 
         ttsDictateBtn.onmousedown = (e) => e.preventDefault();
-        ttsDictateBtn.onclick = ttsToogleDictation;
+        ttsDictateBtn.onclick = ttsToggleDictation;
 
         ttsRecognition.onstart = () => {
           ttsIsRecording = true;
@@ -1086,7 +1086,7 @@
 
       gotitBtn.onclick = async () => {
         synth.cancel();
-        if (ttsIsRecording) { try { ttsToogleDictation(); } catch {} }
+        if (ttsIsRecording) { try { ttsToggleDictation(); } catch {} }
         gotitBtn.disabled = true;
         await fetch('/api/close', { method: 'POST' });
         resetToIdle();
@@ -1172,21 +1172,19 @@
       /* ====================================
          Idle + request loop
          ==================================== */
-      const sttPanelEl = document.getElementById('stt-panel');
-      const ttsPanelEl = document.getElementById('tts-panel');
 
       function resetToIdle() {
         currentMode = null;
         synth.cancel();
         if (isRecording) { try { toggleDictation(); } catch {} }
-        if (ttsIsRecording) { try { ttsToogleDictation(); } catch {} }
+        if (ttsIsRecording) { try { ttsToggleDictation(); } catch {} }
 
-        sttPanelEl.classList.remove('active-mode');
-        sttPanelEl.classList.add('inactive');
+        sttPanel.classList.remove('active-mode');
+        sttPanel.classList.add('inactive');
         sttLabel.classList.remove('active');
 
-        ttsPanelEl.classList.remove('active-mode');
-        ttsPanelEl.classList.add('inactive');
+        ttsPanel.classList.remove('active-mode');
+        ttsPanel.classList.add('inactive');
         ttsLabel.classList.remove('active');
 
         // Reset button visibility
@@ -1214,11 +1212,11 @@
 
       function activateStt(config) {
         currentMode = 'stt';
-        sttPanelEl.classList.remove('inactive');
-        sttPanelEl.classList.add('active-mode');
+        sttPanel.classList.remove('inactive');
+        sttPanel.classList.add('active-mode');
         sttLabel.classList.add('active');
-        ttsPanelEl.classList.add('inactive');
-        ttsPanelEl.classList.remove('active-mode');
+        ttsPanel.classList.add('inactive');
+        ttsPanel.classList.remove('active-mode');
         ttsLabel.classList.remove('active');
 
         // Enable STT buttons in active state
@@ -1246,11 +1244,11 @@
 
       async function activateTts(config) {
         currentMode = 'tts';
-        ttsPanelEl.classList.remove('inactive');
-        ttsPanelEl.classList.add('active-mode');
+        ttsPanel.classList.remove('inactive');
+        ttsPanel.classList.add('active-mode');
         ttsLabel.classList.add('active');
-        sttPanelEl.classList.add('inactive');
-        sttPanelEl.classList.remove('active-mode');
+        sttPanel.classList.add('inactive');
+        sttPanel.classList.remove('active-mode');
         sttLabel.classList.remove('active');
 
         // Enable TTS buttons in active state
@@ -1274,7 +1272,7 @@
         stopBtn.disabled = true;
 
         if (!ttsIsRecording) {
-          try { ttsToogleDictation(); } catch {}
+          try { ttsToggleDictation(); } catch {}
         }
 
         for (let i = 0; i < 20; i++) {

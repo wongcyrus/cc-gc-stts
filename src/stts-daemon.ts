@@ -1,8 +1,7 @@
 import http from 'node:http';
-import fs from 'node:fs';
+import fs, { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as ChromeLauncher from 'chrome-launcher';
 
