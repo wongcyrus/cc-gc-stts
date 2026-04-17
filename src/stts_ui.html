@@ -545,6 +545,7 @@
               <dl>
                 <dt>cancel prompt</dt><dd>Cancel prompt</dd>
                 <dt>send prompt</dt><dd>Send prompt</dd>
+                <dt>end conversation</dt><dd>End the conversation</dd>
               </dl>
               <h4>Selection</h4>
               <dl>
@@ -748,6 +749,7 @@
       });
 
       input.onkeydown = (e) => {
+        if (currentMode !== 'stt') return;
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           submit();
@@ -765,7 +767,7 @@
 
       let inputTimeout;
       const COMMAND_REGEX =
-        /(\s*\binsert\s+comma)|(\s*\binsert\s+period)|(\s*\binsert\s+question\s+mark)|(\s*\binsert\s+exclamation\s+mark)|(\s*\binsert\s+tab)|(([,.?!])\s*new\s+paragraph)|(\s*\bnew\s+paragraph)|(\s*\bselect\s+all)|(\s*\bgo\s+to\s+start)|(\s*\bgo\s+to\s+end)|(\s*\bunselect\s+selection)|(\s*\bdelete\s+selection)|(\s*\bundo\s+it)|(\s*\bredo\s+it)|(\s*\bcancel\s+prompt)|(\s*\bsend\s+prompt)/gi;
+        /(\s*\binsert\s+comma)|(\s*\binsert\s+period)|(\s*\binsert\s+question\s+mark)|(\s*\binsert\s+exclamation\s+mark)|(\s*\binsert\s+tab)|(([,.?!])\s*new\s+paragraph)|(\s*\bnew\s+paragraph)|(\s*\bselect\s+all)|(\s*\bgo\s+to\s+start)|(\s*\bgo\s+to\s+end)|(\s*\bunselect\s+selection)|(\s*\bdelete\s+selection)|(\s*\bundo\s+it)|(\s*\bredo\s+it)|(\s*\bcancel\s+prompt)|(\s*\bsend\s+prompt)|(\s*\bend\s+conversation)/gi;
 
       function extractCommands(text) {
         const regex = new RegExp(COMMAND_REGEX.source, COMMAND_REGEX.flags);
@@ -800,6 +802,7 @@
           else if (match[15]) { effects.push(() => document.execCommand('redo', false)); }
           else if (match[16]) { effects.push(() => cancel()); }
           else if (match[17]) { effects.push(() => submit()); }
+          else if (match[18]) { effects.push(() => document.getElementById('end-btn').click()); }
 
           processedText += sub;
           replacements.push({ start: match.index, end: match.index + match[0].length, sub });
@@ -867,6 +870,16 @@
               ttsToogleDictation();
             } else {
               toggleDictation();
+            }
+          }
+          if (e.key === 'Escape' && currentMode === 'tts') {
+            e.preventDefault();
+            if (ttsCommandsPanel.classList.contains('open')) {
+              ttsCommandsPanel.classList.remove('open');
+            } else if (ttsIsRecording) {
+              try { ttsToogleDictation(); } catch {}
+            } else {
+              gotitBtn.click();
             }
           }
         };
@@ -1208,7 +1221,13 @@
         ttsPanelEl.classList.remove('active-mode');
         ttsLabel.classList.remove('active');
 
-        // Enable TTS buttons in inactive state
+        // Enable STT buttons in active state
+        dictateBtn.style.opacity = '1';
+        dictateBtn.style.pointerEvents = 'auto';
+        commandsBtn.style.opacity = '1';
+        commandsBtn.style.pointerEvents = 'auto';
+
+        // Disable TTS buttons in inactive state
         ttsDictateBtn.style.opacity = '0.4';
         ttsDictateBtn.style.pointerEvents = 'none';
         ttsCommandsBtn.style.opacity = '0.4';
@@ -1219,7 +1238,7 @@
         if (config.title) document.title = config.title;
         sendBtn.textContent = config.action || 'Send';
 
-        if (config.startRecording && !isRecording) {
+        if (!isRecording) {
           try { toggleDictation(); } catch {}
         }
         input.focus();
@@ -1253,6 +1272,10 @@
         hasStarted = false;
         playBtn.disabled = false;
         stopBtn.disabled = true;
+
+        if (!ttsIsRecording) {
+          try { ttsToogleDictation(); } catch {}
+        }
 
         for (let i = 0; i < 20; i++) {
           if (ttsStart()) return;

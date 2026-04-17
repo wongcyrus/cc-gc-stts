@@ -69,7 +69,28 @@ The daemon auto-spawns if not running (via `pingDaemon()` and `spawnDaemon()`), 
 
 ## Voice commands
 
-Show the Voice command side panel to show all the special phases that trigger voice commands.
+Both sides auto-start dictation when activated, so voice commands are live without any clicks.
+
+**Talk side** (prompt entry) — click the speech-bubble button or press **Ctrl+R** to toggle the side panel:
+
+- *Punctuation:* `insert comma`, `insert period`, `insert question mark`, `insert exclamation mark`, `insert tab`
+- *Formatting:* `new paragraph`
+- *Navigation:* `go to start`, `go to end`
+- *Selection:* `select all`, `unselect selection`, `delete selection`
+- *History:* `undo it`, `redo it`
+- *Control:* `cancel prompt`, `send prompt`, `end conversation`
+
+**Listen side** (response playback):
+
+- *Playback:* `play it`, `stop it`
+- *Control:* `got it` (continue to next prompt)
+
+**Keyboard shortcuts:**
+
+- **Ctrl+R** — toggle dictation on the active side
+- **Enter** — send prompt (Talk side)
+- **Escape** (Talk side) — if commands panel is open, close it; else if recording, stop it; else cancel prompt
+- **Escape** (Listen side) — if commands panel is open, close it; else if recording, stop it; else trigger *Got it*
 
 ![Voice command side panel](screenshots/stts-voice-commands.png)
 
