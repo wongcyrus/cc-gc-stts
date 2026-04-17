@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STTS</title>
+    <style>
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #202124;
+        --accent-color: #1a73e8;
+        --border-color: #dadce0;
+        --hover-color: #f1f3f4;
+        --danger-color: #d93025;
+        --shadow:
+          0 1px 2px 0 rgba(60, 64, 67, 0.3),
+          0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        --font-stack:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-color: #202124;
+          --text-color: #e8eaed;
+          --accent-color: #8ab4f8;
+          --border-color: #3c4043;
+          --hover-color: #303134;
+          --shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+        font-family: var(--font-stack);
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .panels-row {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* -- Split layout -- */
+      .panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 14px;
+      }
+
+      #stt-panel { flex: 1; min-width: 200px; }
+      #tts-panel { flex: 1; min-width: 200px; }
+
+      .splitter {
+        width: 6px;
+        background: var(--border-color);
+        cursor: col-resize;
+        flex-shrink: 0;
+        transition: background 0.15s;
+      }
+
+      .splitter:hover,
+      .splitter.dragging {
+        background: var(--accent-color);
+      }
+
+      .panel-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #80868b;
+        margin-bottom: 8px;
+      }
+
+      .panel-label.active {
+        color: var(--accent-color);
+      }
+
+      .panel.active-mode > .container {
+        border-color: var(--accent-color);
+        box-shadow:
+          0 0 0 2px var(--accent-color),
+          var(--shadow);
+      }
+
+      .panel.inactive > .container {
+        opacity: 0.4;
+        filter: grayscale(0.6);
+        pointer-events: none;
+      }
+
+      .panel.inactive > .panel-label {
+        opacity: 0.4;
+      }
+
+      /* -- End conversation -- */
+      .end-bar {
+        padding: 10px 14px;
+        display: flex;
+        justify-content: center;
+        border-top: 1px solid var(--border-color);
+        background: var(--hover-color);
+        flex-shrink: 0;
+      }
+
+      #end-btn {
+        background: var(--danger-color);
+        color: #fff;
+        padding: 0 32px;
+        height: 40px;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+
+      #end-btn:hover {
+        filter: brightness(1.15);
+      }
+
+      /* -- Shared container -- */
+      .container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-color);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+        transition:
+          border-color 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .container.listening,
+      .container.speaking {
+        animation: techno-pulse 6s infinite alternate;
+      }
+
+      @keyframes techno-pulse {
+        0% {
+          box-shadow:
+            0 0 20px rgba(26, 115, 232, 0.6),
+            0 0 40px rgba(26, 115, 232, 0.3);
+          border-color: var(--accent-color);
+        }
+        33% {
+          box-shadow:
+            0 0 30px rgba(161, 66, 244, 0.7),
+            0 0 50px rgba(161, 66, 244, 0.4);
+          border-color: #a142f4;
+        }
+        66% {
+          box-shadow:
+            0 0 20px rgba(52, 168, 83, 0.6),
+            0 0 40px rgba(52, 168, 83, 0.3);
+          border-color: #34a853;
+        }
+        100% {
+          box-shadow:
+            0 0 35px rgba(241, 158, 56, 0.7),
+            0 0 60px rgba(241, 158, 56, 0.4);
+          border-color: #f19e38;
+        }
+      }
+
+      textarea {
+        flex: 1;
+        width: 100%;
+        border: none;
+        padding: 16px;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 15px;
+        line-height: 1.5;
+        resize: none;
+        outline: none;
+      }
+
+      textarea::placeholder { color: #80868b; }
+
+      .bottom-bar {
+        display: flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border-color);
+        background: var(--hover-color);
+        gap: 12px;
+      }
+
+      .status-area {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+      }
+
+      button {
+        border: 1px solid transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.15s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+      }
+
+      .actions { display: flex; gap: 10px; }
+
+      /* -- STT-specific -- */
+      #dictate-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        padding: 0;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+      }
+
+      #dictate-btn:hover {
+        background: var(--hover-color);
+        border-color: var(--accent-color);
+      }
+
+      #dictate-btn.recording {
+        background: var(--danger-color);
+        color: white;
+        border-color: var(--danger-color);
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.4); }
+        70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(217, 48, 37, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
+      }
+
+      .stt-status {
+        font-size: 12.5px;
+        color: var(--accent-color);
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .stt-status.visible { opacity: 1; }
+
+      #cancel-btn {
+        background: transparent;
+        color: var(--text-color);
+        padding: 0 16px;
+      }
+
+      #cancel-btn:hover { background: var(--border-color); }
+
+      #send-btn {
+        background: var(--accent-color);
+        color: #ffffff;
+        padding: 0 20px;
+      }
+
+      #send-btn:hover {
+        filter: brightness(1.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+
+      .hint {
+        position: absolute;
+        bottom: 64px;
+        right: 16px;
+        font-size: 10.5px;
+        color: #80868b;
+        pointer-events: none;
+        background: var(--bg-color);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      #commands-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        padding: 0;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      #commands-btn:hover {
+        background: var(--hover-color);
+        border-color: var(--accent-color);
+      }
+
+      .commands-panel {
+        position: absolute;
+        top: 0; right: 0; bottom: 0;
+        width: 480px;
+        background: var(--bg-color);
+        border-left: 1px solid var(--border-color);
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        z-index: 10;
+        overflow-y: auto;
+        padding: 14px 16px;
+      }
+
+      .commands-panel.open { transform: translateX(0); }
+
+      .commands-panel h3 {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #80868b;
+        margin: 0 0 10px 0;
+      }
+
+      .commands-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 20px;
+      }
+
+      .commands-panel h4 {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent-color);
+        margin: 8px 0 4px 0;
+      }
+
+      .commands-panel h4:first-child { margin-top: 0; }
+
+      .commands-panel dl {
+        margin: 0;
+        font-size: 11.5px;
+        line-height: 1.5;
+      }
+
+      .commands-panel dt { font-weight: 500; color: var(--text-color); }
+
+      .commands-panel dd {
+        margin: 0 0 4px 0;
+        color: #80868b;
+        font-size: 10.5px;
+      }
+
+      .commands-panel .close-panel {
+        position: absolute;
+        top: 8px; right: 8px;
+        background: none;
+        border: none;
+        color: #80868b;
+        font-size: 18px;
+        width: 24px; height: 24px;
+        padding: 0;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .commands-panel .close-panel:hover {
+        background: var(--hover-color);
+        color: var(--text-color);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .commands-panel { box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4); }
+      }
+
+      /* -- TTS-specific -- */
+      .visualizer {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 24px;
+      }
+
+      .bar {
+        width: 3px;
+        height: 6px;
+        background: var(--accent-color);
+        border-radius: 1px;
+        transition: height 0.1s ease;
+      }
+
+      .bar.animating {
+        animation: bounce 0.6s infinite alternate;
+      }
+
+      @keyframes bounce {
+        from { height: 6px; opacity: 0.4; }
+        to { height: 20px; opacity: 1; }
+      }
+
+      .tts-status {
+        font-size: 13px;
+        color: var(--accent-color);
+        font-weight: 500;
+      }
+
+      #play-btn {
+        background: var(--accent-color);
+        color: #fff;
+        padding: 0 18px;
+      }
+
+      #play-btn:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: scale(1.02);
+      }
+
+      #play-btn:disabled, #stop-btn:disabled {
+        background: var(--border-color);
+        color: #80868b;
+        cursor: not-allowed;
+      }
+
+      #stop-btn {
+        background: var(--danger-color);
+        color: #fff;
+        padding: 0 18px;
+      }
+
+      #stop-btn:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: scale(1.02);
+      }
+
+      #refresh-btn {
+        background: var(--danger-color);
+        color: white;
+        padding: 0 18px;
+        display: none;
+      }
+
+      #gotit-btn {
+        background: var(--accent-color);
+        color: #fff;
+        padding: 0 20px;
+      }
+
+      #gotit-btn:hover:not(:disabled) {
+        filter: brightness(1.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+
+      #gotit-btn:disabled {
+        background: var(--border-color);
+        color: #80868b;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panels-row">
+    <!-- -- STT Panel (left) -- -->
+    <div class="panel" id="stt-panel">
+      <div class="panel-label" id="stt-label">Talk</div>
+      <div class="container" id="stt-container">
+        <textarea
+          id="prompt-input"
+          placeholder="Enter your prompt..."
+          autofocus
+        ></textarea>
+        <div class="hint">
+          <b>Ctrl+R</b> toggle STT &nbsp;&middot;&nbsp; <b>Enter</b> send &nbsp;&middot;&nbsp; <b>Shift+Enter</b> new line
+        </div>
+        <div class="commands-panel" id="commands-panel">
+          <button class="close-panel" id="close-panel" title="Close">&times;</button>
+          <h3>Voice Commands</h3>
+          <div class="commands-columns">
+            <div>
+              <h4>Punctuation</h4>
+              <dl>
+                <dt>insert comma</dt><dd>Inserts <b>,</b></dd>
+                <dt>insert period</dt><dd>Inserts <b>.</b></dd>
+                <dt>insert question mark</dt><dd>Inserts <b>?</b></dd>
+                <dt>insert exclamation mark</dt><dd>Inserts <b>!</b></dd>
+                <dt>insert tab</dt><dd>Inserts a tab character</dd>
+              </dl>
+              <h4>Formatting</h4>
+              <dl>
+                <dt>new paragraph</dt><dd>Ends sentence, starts new paragraph</dd>
+              </dl>
+              <h4>Navigation</h4>
+              <dl>
+                <dt>go to start</dt><dd>Moves cursor to beginning</dd>
+                <dt>go to end</dt><dd>Moves cursor to end</dd>
+              </dl>
+            </div>
+            <div>
+              <h4>Control</h4>
+              <dl>
+                <dt>cancel prompt</dt><dd>Cancel prompt</dd>
+                <dt>send prompt</dt><dd>Send prompt</dd>
+              </dl>
+              <h4>Selection</h4>
+              <dl>
+                <dt>select all</dt><dd>Selects all text</dd>
+                <dt>unselect selection</dt><dd>Collapses selection, keeps text</dd>
+                <dt>delete selection</dt><dd>Deletes the selected text</dd>
+              </dl>
+              <h4>History</h4>
+              <dl>
+                <dt>undo it</dt><dd>Undoes last action</dd>
+                <dt>redo it</dt><dd>Redoes last undone action</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-bar">
+          <div class="status-area">
+            <button id="dictate-btn" title="Click to dictate (Ctrl+R)" tabindex="-1">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+              </svg>
+            </button>
+            <button id="commands-btn" title="Voice commands cheat sheet" tabindex="-1">&#x1f5e3;&#xfe0f;</button>
+            <div class="stt-status" id="stt-status">Listening...</div>
+          </div>
+          <div class="actions">
+            <button id="send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- -- Splitter -- -->
+    <div class="splitter" id="splitter"></div>
+
+    <!-- -- TTS Panel (right) -- -->
+    <div class="panel" id="tts-panel">
+      <div class="panel-label" id="tts-label">Listen</div>
+      <div class="container" id="tts-container">
+        <textarea
+          id="output-text"
+          placeholder="Type text here or wait for a response..."
+        ></textarea>
+        <div class="bottom-bar">
+          <div class="status-area">
+            <div class="visualizer" id="visualizer">
+              <div class="bar" style="animation-delay: 0s"></div>
+              <div class="bar" style="animation-delay: 0.1s"></div>
+              <div class="bar" style="animation-delay: 0.2s"></div>
+              <div class="bar" style="animation-delay: 0.3s"></div>
+              <div class="bar" style="animation-delay: 0.4s"></div>
+            </div>
+            <div class="tts-status" id="tts-status">Ready...</div>
+          </div>
+          <div class="actions">
+            <button id="refresh-btn">Fix Voices</button>
+            <button id="play-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play
+            </button>
+            <button id="stop-btn" disabled>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M6 6h12v12H6z" />
+              </svg>
+              Stop
+            </button>
+            <button id="gotit-btn" disabled>Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /panels-row -->
+
+    <div class="end-bar">
+      <button id="end-btn">End conversation</button>
+    </div>
+
+    <script>
+      /* ====================================
+         Splitter
+         ==================================== */
+      const splitter = document.getElementById('splitter');
+      const sttPanel = document.getElementById('stt-panel');
+      const ttsPanel = document.getElementById('tts-panel');
+
+      let isDragging = false;
+
+      splitter.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        splitter.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const leftPct = Math.max(15, Math.min(85, (e.clientX / document.body.clientWidth) * 100));
+        sttPanel.style.flex = 'none';
+        ttsPanel.style.flex = 'none';
+        sttPanel.style.width = leftPct + '%';
+        ttsPanel.style.width = (100 - leftPct) + '%';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          splitter.classList.remove('dragging');
+        }
+      });
+
+      /* ====================================
+         End conversation
+         ==================================== */
+      let currentMode = null;
+
+      document.getElementById('end-btn').onclick = async () => {
+        if (isRecording) toggleDictation();
+        synth.cancel();
+        if (currentMode === 'tts') {
+          await fetch('/api/close', { method: 'POST' });
+        } else if (currentMode === 'stt') {
+          await fetch('/api/cancel', { method: 'POST' });
+        }
+        await fetch('/api/shutdown', { method: 'POST' }).catch(() => {});
+        document.title = 'Conversation ended';
+        document.body.innerHTML = '<p style="font-family:system-ui;color:#888;text-align:center;margin-top:40px">Conversation ended. You can close this tab.</p>';
+      };
+
+      /* ====================================
+         STT
+         ==================================== */
+      const input = document.getElementById('prompt-input');
+      const sendBtn = document.getElementById('send-btn');
+      const dictateBtn = document.getElementById('dictate-btn');
+      const commandsBtn = document.getElementById('commands-btn');
+      const commandsPanel = document.getElementById('commands-panel');
+      const closePanelBtn = document.getElementById('close-panel');
+      const sttStatus = document.getElementById('stt-status');
+      const sttContainer = document.getElementById('stt-container');
+      const sttLabel = document.getElementById('stt-label');
+
+      let isRecording = false;
+      let toggleDictation = () => {};
+
+      async function submit() {
+        const text = input.value.trim();
+        if (!text) return;
+        if (isRecording) toggleDictation();
+        localStorage.setItem('__stts__prompt', input.value);
+        await fetch('/api/complete', { method: 'POST', body: text });
+        resetToIdle();
+      }
+
+      async function cancel() {
+        if (isRecording) toggleDictation();
+        await fetch('/api/cancel', { method: 'POST' });
+        resetToIdle();
+      }
+
+      sendBtn.onclick = submit;
+
+      commandsBtn.onmousedown = (e) => e.preventDefault();
+      commandsBtn.onclick = () => commandsPanel.classList.toggle('open');
+      closePanelBtn.onmousedown = (e) => e.preventDefault();
+      closePanelBtn.onclick = () => commandsPanel.classList.remove('open');
+
+      document.addEventListener('mousedown', (e) => {
+        if (
+          commandsPanel.classList.contains('open') &&
+          !commandsPanel.contains(e.target) &&
+          !commandsBtn.contains(e.target)
+        ) {
+          commandsPanel.classList.remove('open');
+        }
+      });
+
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submit();
+        }
+        if (e.key === 'Escape') {
+          if (commandsPanel.classList.contains('open')) {
+            commandsPanel.classList.remove('open');
+          } else if (isRecording) {
+            toggleDictation();
+          } else {
+            cancel();
+          }
+        }
+      };
+
+      let inputTimeout;
+      const COMMAND_REGEX =
+        /(\s*\binsert\s+comma)|(\s*\binsert\s+period)|(\s*\binsert\s+question\s+mark)|(\s*\binsert\s+exclamation\s+mark)|(\s*\binsert\s+tab)|(([,.?!])\s*new\s+paragraph)|(\s*\bnew\s+paragraph)|(\s*\bselect\s+all)|(\s*\bgo\s+to\s+start)|(\s*\bgo\s+to\s+end)|(\s*\bunselect\s+selection)|(\s*\bdelete\s+selection)|(\s*\bundo\s+it)|(\s*\bredo\s+it)|(\s*\bcancel\s+prompt)|(\s*\bsend\s+prompt)/gi;
+
+      function extractCommands(text) {
+        const regex = new RegExp(COMMAND_REGEX.source, COMMAND_REGEX.flags);
+        let processedText = '';
+        let hasRealText = false;
+        let hasTextOutput = false;
+        const effects = [];
+        const replacements = [];
+        let deletesSelection = false;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+          const before = text.substring(lastIndex, match.index);
+          processedText += before;
+          if (before.trim()) hasRealText = true;
+
+          let sub = '';
+          if (match[1]) { sub = ', '; hasTextOutput = true; }
+          else if (match[2]) { sub = '. '; hasTextOutput = true; }
+          else if (match[3]) { sub = '? '; hasTextOutput = true; }
+          else if (match[4]) { sub = '! '; hasTextOutput = true; }
+          else if (match[5]) { sub = '\t'; hasTextOutput = true; }
+          else if (match[6]) { sub = match[7] + '\n\n'; hasTextOutput = true; }
+          else if (match[8]) { sub = '.\n\n'; hasTextOutput = true; }
+          else if (match[9]) { effects.push(() => input.select()); }
+          else if (match[10]) { effects.push(() => input.setSelectionRange(0, 0)); }
+          else if (match[11]) { effects.push(() => input.setSelectionRange(input.value.length, input.value.length)); }
+          else if (match[12]) { effects.push(() => { const pos = input.selectionStart; input.setSelectionRange(pos, pos); }); }
+          else if (match[13]) { deletesSelection = true; }
+          else if (match[14]) { effects.push(() => document.execCommand('undo', false)); }
+          else if (match[15]) { effects.push(() => document.execCommand('redo', false)); }
+          else if (match[16]) { effects.push(() => cancel()); }
+          else if (match[17]) { effects.push(() => submit()); }
+
+          processedText += sub;
+          replacements.push({ start: match.index, end: match.index + match[0].length, sub });
+          lastIndex = regex.lastIndex;
+        }
+
+        processedText += text.substring(lastIndex);
+        if (text.substring(lastIndex).trim()) hasRealText = true;
+
+        return { processedText, replacements, replaceSelection: hasRealText || hasTextOutput, effects, deletesSelection };
+      }
+
+      let isProcessing = false;
+
+      function processInput(smartCursorMovement = false) {
+        const { replacements, effects } = extractCommands(input.value);
+        if (replacements.length) {
+          isProcessing = true;
+          for (let i = replacements.length - 1; i >= 0; i--) {
+            const { start, end, sub } = replacements[i];
+            input.setSelectionRange(start, end);
+            document.execCommand('insertText', false, sub);
+          }
+          if (smartCursorMovement) {
+            const last = replacements[0];
+            const cursorPos = last.start + last.sub.length;
+            input.setSelectionRange(cursorPos, cursorPos);
+          }
+          isProcessing = false;
+        }
+        if (effects.length) {
+          setTimeout(() => effects.forEach(fn => fn()), 0);
+        }
+      }
+
+      input.oninput = (e) => {
+        if (isProcessing) return;
+        if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') return;
+        clearTimeout(inputTimeout);
+        inputTimeout = setTimeout(processInput, 500);
+        localStorage.setItem('__stts__prompt', input.value);
+      };
+
+      const speechRecognition = window['SpeechRecognition'] || window['webkitSpeechRecognition'];
+      if (speechRecognition) {
+        const recognition = new speechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        toggleDictation = () => {
+          if (isRecording) {
+            recognition.stop();
+          } else {
+            recognition.start();
+          }
+        };
+
+        dictateBtn.onmousedown = (e) => e.preventDefault();
+        dictateBtn.onclick = toggleDictation;
+
+        window.onkeydown = (e) => {
+          if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
+            toggleDictation();
+          }
+        };
+
+        recognition.onstart = () => {
+          isRecording = true;
+          dictateBtn.classList.add('recording');
+          sttContainer.classList.add('listening');
+          sttStatus.classList.add('visible');
+        };
+
+        recognition.onend = () => {
+          isRecording = false;
+          dictateBtn.classList.remove('recording');
+          sttContainer.classList.remove('listening');
+          sttStatus.classList.remove('visible');
+        };
+
+        recognition.onresult = (event) => {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+          if (finalTranscript) {
+            isProcessing = true;
+            const { processedText, replaceSelection, effects, deletesSelection } = extractCommands(finalTranscript);
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const hasSelection = start !== end;
+
+            if (hasSelection && deletesSelection) {
+              input.setSelectionRange(start, end);
+              document.execCommand('delete', false);
+            }
+
+            const insertPos = input.selectionStart;
+            const insertEnd = input.selectionEnd;
+
+            if (insertPos !== insertEnd && !replaceSelection) {
+              input.setSelectionRange(insertEnd, insertEnd);
+            } else if (insertPos !== insertEnd) {
+              input.setSelectionRange(insertPos, insertEnd);
+            }
+
+            if (processedText) {
+              document.execCommand('insertText', false, processedText);
+            }
+
+            isProcessing = false;
+            localStorage.setItem('__stts__prompt', input.value);
+
+            if (effects.length) {
+              setTimeout(() => effects.forEach(fn => fn()), 0);
+            }
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          sttStatus.textContent = 'Error: ' + event.error;
+          setTimeout(() => { sttStatus.textContent = 'Listening...'; }, 3000);
+        };
+      } else {
+        dictateBtn.style.display = 'none';
+      }
+
+      /* ====================================
+         TTS
+         ==================================== */
+      const ttsContainer = document.getElementById('tts-container');
+      const ttsTextarea = document.getElementById('output-text');
+      const playBtn = document.getElementById('play-btn');
+      const stopBtn = document.getElementById('stop-btn');
+      const gotitBtn = document.getElementById('gotit-btn');
+      const refreshBtn = document.getElementById('refresh-btn');
+      const ttsStatus = document.getElementById('tts-status');
+      const ttsLabel = document.getElementById('tts-label');
+      const bars = document.querySelectorAll('.bar');
+
+      const synth = window.speechSynthesis;
+      let currentUtterance = null;
+      let hasStarted = false;
+      let isOneshot = false;
+      let isRestarting = false;
+
+      refreshBtn.onclick = () => {
+        synth.cancel();
+        location.reload();
+      };
+
+      playBtn.onclick = () => {
+        hasStarted = false;
+        isRestarting = true;
+        synth.cancel();
+        isRestarting = false;
+        startSpeaking();
+      };
+
+      function stopSpeaking() {
+        synth.cancel();
+        isOneshot = false;
+        hasStarted = false;
+        playBtn.disabled = false;
+        stopBtn.disabled = true;
+        ttsContainer.classList.remove('speaking');
+        bars.forEach((b) => b.classList.remove('animating'));
+        ttsStatus.textContent = 'Stopped. Press Play to listen again.';
+      }
+
+      stopBtn.onclick = stopSpeaking;
+
+      gotitBtn.onclick = async () => {
+        synth.cancel();
+        gotitBtn.disabled = true;
+        await fetch('/api/close', { method: 'POST' });
+        resetToIdle();
+      };
+
+      function startSpeaking() {
+        const textToSpeak = ttsTextarea.value.trim();
+        if (hasStarted || !textToSpeak) return;
+
+        const voices = synth.getVoices();
+        if (voices.length === 0) {
+          ttsStatus.textContent = 'Waiting for system voices...';
+          return;
+        }
+
+        hasStarted = true;
+        playBtn.disabled = true;
+        stopBtn.disabled = false;
+        refreshBtn.style.display = 'none';
+        ttsStatus.textContent = 'Speaking...';
+
+        synth.cancel();
+
+        currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+
+        const voice =
+          voices.find((v) => v.lang === 'en-US') ||
+          voices.find((v) => v.lang.startsWith('en-US')) ||
+          voices.find((v) => v.lang.startsWith('en')) ||
+          voices[0];
+
+        if (voice) currentUtterance.voice = voice;
+
+        currentUtterance.onstart = () => {
+          ttsContainer.classList.add('speaking');
+          bars.forEach((b) => b.classList.add('animating'));
+        };
+
+        currentUtterance.onend = () => {
+          ttsContainer.classList.remove('speaking');
+          bars.forEach((b) => b.classList.remove('animating'));
+          ttsStatus.textContent = 'Finished. Play again or click "Got it!" to continue.';
+          playBtn.disabled = false;
+          stopBtn.disabled = true;
+          hasStarted = false;
+        };
+
+        currentUtterance.onerror = (e) => {
+          if (isRestarting) return;
+          console.error('Speech error:', e.error);
+          ttsContainer.classList.remove('speaking');
+          bars.forEach((b) => b.classList.remove('animating'));
+          ttsStatus.textContent = (e.error === 'interrupted' || e.error === 'canceled') ? 'Stopped. Press Play to listen again.' : 'Error: ' + e.error;
+          playBtn.disabled = false;
+          stopBtn.disabled = true;
+          hasStarted = false;
+        };
+
+        synth.speak(currentUtterance);
+      }
+
+      function ttsStart() {
+        const voices = synth.getVoices();
+        if (voices.length > 0 && ttsTextarea.value.trim()) {
+          startSpeaking();
+          return true;
+        }
+        return false;
+      }
+
+      // Nudge the TTS engine on load
+      (function wakeUp() {
+        const dummy = new SpeechSynthesisUtterance('');
+        dummy.volume = 0;
+        synth.speak(dummy);
+        synth.cancel();
+      })();
+
+      if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = () => ttsStart();
+      }
+
+      /* ====================================
+         Idle + request loop
+         ==================================== */
+      const sttPanelEl = document.getElementById('stt-panel');
+      const ttsPanelEl = document.getElementById('tts-panel');
+
+      function resetToIdle() {
+        currentMode = null;
+        synth.cancel();
+        if (isRecording) { try { toggleDictation(); } catch {} }
+
+        sttPanelEl.classList.remove('active-mode');
+        sttPanelEl.classList.add('inactive');
+        sttLabel.classList.remove('active');
+
+        ttsPanelEl.classList.remove('active-mode');
+        ttsPanelEl.classList.add('inactive');
+        ttsLabel.classList.remove('active');
+
+        hasStarted = false;
+        ttsContainer.classList.remove('speaking');
+        bars.forEach((b) => b.classList.remove('animating'));
+        playBtn.disabled = false;
+        stopBtn.disabled = true;
+        gotitBtn.disabled = true;
+        ttsStatus.textContent = 'Waiting...';
+        sttStatus.classList.remove('visible');
+
+        document.title = 'Waiting for next request...';
+      }
+
+      function activateStt(config) {
+        currentMode = 'stt';
+        sttPanelEl.classList.remove('inactive');
+        sttPanelEl.classList.add('active-mode');
+        sttLabel.classList.add('active');
+        ttsPanelEl.classList.add('inactive');
+        ttsPanelEl.classList.remove('active-mode');
+        ttsLabel.classList.remove('active');
+
+        input.value = config.initialText || '';
+        if (config.initialText) processInput(false);
+        if (config.title) document.title = config.title;
+        sendBtn.textContent = config.action || 'Send';
+
+        if (config.startRecording && !isRecording) {
+          try { toggleDictation(); } catch {}
+        }
+        input.focus();
+      }
+
+      async function activateTts(config) {
+        currentMode = 'tts';
+        ttsPanelEl.classList.remove('inactive');
+        ttsPanelEl.classList.add('active-mode');
+        ttsLabel.classList.add('active');
+        sttPanelEl.classList.add('inactive');
+        sttPanelEl.classList.remove('active-mode');
+        sttLabel.classList.remove('active');
+
+        ttsTextarea.value = config.text || '';
+        if (config.title) document.title = config.title;
+        isOneshot = !!config.oneshot;
+        gotitBtn.disabled = false;
+        hasStarted = false;
+        playBtn.disabled = false;
+        stopBtn.disabled = true;
+
+        for (let i = 0; i < 20; i++) {
+          if (ttsStart()) return;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        const pollInterval = setInterval(() => {
+          if (currentMode !== 'tts' || ttsStart()) clearInterval(pollInterval);
+        }, 100);
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (currentMode === 'tts' && synth.getVoices().length === 0) {
+            refreshBtn.style.display = 'flex';
+            ttsStatus.textContent = "Voices still missing. Try 'Fix Voices'.";
+          }
+        }, 5000);
+      }
+
+      async function waitLoop() {
+        resetToIdle();
+        while (true) {
+          let config;
+          try {
+            const resp = await fetch('/api/wait');
+            if (!resp.ok) throw new Error('wait failed: ' + resp.status);
+            config = await resp.json();
+          } catch (e) {
+            console.error('wait error', e);
+            await new Promise((r) => setTimeout(r, 1000));
+            continue;
+          }
+          if (config.mode === 'stt') activateStt(config);
+          else if (config.mode === 'tts') await activateTts(config);
+          // Await user interaction; resetToIdle() is called by submit/cancel/close/gotit.
+          while (currentMode !== null) {
+            await new Promise((r) => setTimeout(r, 100));
+          }
+        }
+      }
+
+      waitLoop();
+    </script>
+  </body>
+</html>

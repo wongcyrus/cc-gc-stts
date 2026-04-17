@@ -8,7 +8,7 @@ rmSync(outdir, { recursive: true, force: true });
 mkdirSync(outdir, { recursive: true });
 
 await build({
-  entryPoints: ['src/stts.ts', 'src/stts-mcp-server.ts'],
+  entryPoints: ['src/stts.ts', 'src/stts-mcp-server.ts', 'src/stts-daemon.ts'],
   bundle: true,
   platform: 'node',
   format: 'esm',
@@ -22,8 +22,8 @@ await build({
   logLevel: 'info',
 });
 
-for (const html of ['stt_ui.html', 'tts_ui.html']) {
+for (const html of ['stts_ui.html']) {
   copyFileSync(path.join('src', html), path.join(outdir, html));
 }
 
-console.log('Build complete: dist/stts.mjs, dist/stts-mcp-server.mjs');
+console.log('Build complete: dist/stts.mjs, dist/stts-mcp-server.mjs, dist/stts-daemon.mjs');
