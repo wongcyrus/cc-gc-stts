@@ -20,10 +20,11 @@ Talk to **Claude Code** or **Gemini CLI** and hear them talk back. This project 
 
 `stts` uses a background daemon to manage a persistent Chrome/Chromium window:
 
-1.  **MCP Server:** Exposes `stt` and `tts` tools to the AI model.
-2.  **Daemon:** A local HTTP server (port `15986`) that controls a Chrome instance in "app mode".
-3.  **Browser UI:** Uses the native **Web Speech API** for high-quality, zero-cost recognition and synthesis.
+1.  **MCP Server:** Exposes `stt` and `tts` tools to the AI model. Talks to the daemon directly over HTTP — no per-call subprocess spawn.
+2.  **Daemon:** A local HTTP server (port `15986`) that controls a Chrome instance in "app mode". Stores its profile under `$TMPDIR/cc-gc-stts-user-data-dir`.
+3.  **Browser UI:** Uses the native **Web Speech API** for recognition and synthesis. Free at the wallet — note that on Linux Chrome routes recognition audio through Google's servers, so this is not a fully offline pipeline.
 4.  **Automatic Lifecycle:** The daemon starts on demand and shuts down when the Chrome window is closed.
+5.  **Port-collision aware:** If port `15986` is held by a non-stts process, the launcher fails fast with a clear error instead of timing out.
 
 ## 🚀 Quick Start
 
@@ -99,6 +100,13 @@ The daemon usually runs automatically, but you can manually stop it by closing t
 ```bash
 curl -X POST http://127.0.0.1:15986/api/shutdown
 ```
+
+### Project Layout
+- `src/stts-mcp-server.ts` — MCP server exposing the `stt` and `tts` tools. Calls the daemon HTTP API directly.
+- `src/stts-daemon.ts` — local HTTP server on port `15986` that owns the Chrome window.
+- `src/daemon-client.ts` — shared HTTP client used by the MCP server and the CLI.
+- `src/stts.ts` — standalone CLI (`stts stt` / `stts tts`) for manual use and diagnostics.
+- `src/stts_ui.html` — the Web Speech API UI rendered inside the Chrome window.
 
 ## 📋 Requirements
 

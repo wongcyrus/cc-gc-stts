@@ -1,5 +1,5 @@
 import { program } from 'commander';
-import { launchStt, launchTts } from './chrome-launcher.ts';
+import { launchStt, launchTts } from './daemon-client.ts';
 
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) return '';

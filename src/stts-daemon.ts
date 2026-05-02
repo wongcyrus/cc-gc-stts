@@ -34,7 +34,7 @@ function loadHtml(): string {
 }
 
 function getChromeUserDataDir(): string {
-  const dir = path.join(tmpdir(), 'ai-sidekick-user-data-dir');
+  const dir = path.join(tmpdir(), 'cc-gc-stts-user-data-dir');
   mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -69,7 +69,7 @@ async function ensureChrome() {
           `--app=http://127.0.0.1:${FIXED_PORT}/`,
           '--window-size=1600,600',
           '--autoplay-policy=no-user-gesture-required',
-          '--use-fake-ui-for-media-stream',
+          '--auto-accept-camera-and-microphone-capture',
         ],
       });
       chrome.process.on('exit', () => {

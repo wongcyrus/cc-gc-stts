@@ -1,4 +1,5 @@
 import http from 'node:http';
+import net from 'node:net';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +7,7 @@ import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const FIXED_PORT = 15986;
+export const FIXED_PORT = 15986;
 
 export interface SttConfig {
   title: string;
@@ -22,7 +23,9 @@ export interface TtsConfig {
   oneshot: boolean;
 }
 
-function pingDaemon(): Promise<boolean> {
+type PingResult = 'ours' | 'foreign' | 'closed';
+
+function pingDaemon(): Promise<PingResult> {
   return new Promise((resolve) => {
     const req = http.request(
       {
@@ -33,16 +36,33 @@ function pingDaemon(): Promise<boolean> {
         timeout: 500,
       },
       (res) => {
-        res.resume();
-        resolve(res.statusCode === 200);
+        const chunks: Buffer[] = [];
+        res.on('data', (c: Buffer) => chunks.push(c));
+        res.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf-8').trim();
+          resolve(res.statusCode === 200 && body === 'ok' ? 'ours' : 'foreign');
+        });
       }
     );
-    req.on('error', () => resolve(false));
+    req.on('error', () => resolve('closed'));
     req.on('timeout', () => {
       req.destroy();
-      resolve(false);
+      resolve('foreign');
     });
     req.end();
+  });
+}
+
+function probePortOpen(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const sock = net.createConnection({ host: '127.0.0.1', port: FIXED_PORT });
+    const done = (open: boolean) => {
+      sock.destroy();
+      resolve(open);
+    };
+    sock.once('connect', () => done(true));
+    sock.once('error', () => done(false));
+    sock.setTimeout(300, () => done(false));
   });
 }
 
@@ -69,11 +89,28 @@ function spawnDaemon(): void {
 }
 
 async function ensureDaemon(): Promise<void> {
-  if (await pingDaemon()) return;
+  const initial = await pingDaemon();
+  if (initial === 'ours') return;
+  if (initial === 'foreign') {
+    throw new Error(
+      `port ${FIXED_PORT} is already in use by another process (not the stts daemon)`
+    );
+  }
   spawnDaemon();
   for (let i = 0; i < 80; i++) {
     await new Promise((r) => setTimeout(r, 100));
-    if (await pingDaemon()) return;
+    const status = await pingDaemon();
+    if (status === 'ours') return;
+    if (status === 'foreign') {
+      throw new Error(
+        `port ${FIXED_PORT} is held by a foreign process; cannot start stts daemon`
+      );
+    }
+  }
+  if (await probePortOpen()) {
+    throw new Error(
+      `stts daemon did not become healthy on port ${FIXED_PORT}, but the port is open`
+    );
   }
   throw new Error('stts daemon failed to start');
 }
