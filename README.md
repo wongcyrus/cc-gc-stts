@@ -5,6 +5,8 @@
 
 Talk to **Claude Code** or **Gemini CLI** and hear them talk back. This project adds seamless Speech-to-Text (STT) and Text-to-Speech (TTS) capabilities via a Model Context Protocol (MCP) server.
 
+📰 **Read the story:** [True voice mode for Claude Code](https://www.linkedin.com/pulse/true-voice-mode-claude-code-sandip-chitale-rz5uc/)
+
 ![Talk](screenshots/stts-prompt.png)
 ![Listen](screenshots/stts-response.png)
 
