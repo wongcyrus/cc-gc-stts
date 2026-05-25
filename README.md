@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-blue.svg)](https://nodejs.org/)
 
-Talk to **Claude Code** or **Gemini CLI** and hear them talk back. This project adds seamless Speech-to-Text (STT) and Text-to-Speech (TTS) capabilities via a Model Context Protocol (MCP) server.
+Talk to **Claude Code**, **Gemini CLI** or **Antigravity CLI aka agy** and hear them talk back. This project adds seamless Speech-to-Text (STT) and Text-to-Speech (TTS) capabilities via a Model Context Protocol (MCP) server.
 
 📰 **Read the story:** [True voice mode for Claude Code](https://www.linkedin.com/pulse/true-voice-mode-claude-code-sandip-chitale-rz5uc/)
 
@@ -53,12 +53,18 @@ claude plugin install stts
 gemini extensions install --consent https://github.com/sandipchitale/cc-gc-stts.git
 ```
 
+#### **Antigravity CLI**
+```bash
+agy plugin install --consent https://github.com/sandipchitale/cc-gc-stts.git
+```
+
 ## ⌨️ Usage
 
 ### Conversational Loop
 Run the voice-driven loop where you speak, the model processes, and the response is read back to you:
 - **Claude Code:** `/stts`
 - **Gemini CLI:** `/stts`
+- **Antigravity CLI:** `/stts`
 
 ### Direct Tool Usage
 You can also ask the model to "use the stt tool" or "speak this using tts" directly in your prompts.
@@ -110,6 +116,11 @@ claude plugin install stts
 **Gemini CLI:**
 ```bash
 gemini extensions install --consent "$PWD"
+```
+
+**Antigravity CLI:**
+```bash
+agy plugin install "$PWD"
 ```
 
 ### Daemon Control
