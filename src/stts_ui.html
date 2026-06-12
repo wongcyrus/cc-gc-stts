@@ -615,6 +615,14 @@
 </head>
 
 <body>
+  <div class="top-bar-lang" style="position: fixed; top: 10px; right: 10px; z-index: 1000; background: var(--bg-color); padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; font-family: var(--font-stack); font-size: 13px; color: var(--text-color);">
+    <span>🌐 Lang:</span>
+    <select id="global-lang-select" style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none;">
+      <option value="en-US" style="background: var(--bg-color); color: var(--text-color);">English (en-US)</option>
+      <option value="zh-HK" style="background: var(--bg-color); color: var(--text-color);">Cantonese (zh-HK)</option>
+      <option value="zh-CN" style="background: var(--bg-color); color: var(--text-color);">Mandarin (zh-CN)</option>
+    </select>
+  </div>
   <div class="panels-row">
     <!-- -- STT Panel (left) -- -->
     <div class="panel" id="stt-panel">
@@ -1122,6 +1130,7 @@
         if (isRecording) {
           recognition.stop();
         } else {
+          recognition.lang = document.getElementById('global-lang-select')?.value || 'en-US';
           recognition.start();
         }
       };
@@ -1290,6 +1299,7 @@
         if (ttsIsRecording) {
           ttsRecognition.stop();
         } else {
+          ttsRecognition.lang = document.getElementById('global-lang-select')?.value || 'en-US';
           ttsRecognition.start();
         }
       };
@@ -1390,10 +1400,12 @@
 
       currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
 
+      const selectedLang = document.getElementById('global-lang-select')?.value || 'en-US';
       const voice =
+        voices.find((v) => v.lang === selectedLang) ||
+        voices.find((v) => v.lang.startsWith(selectedLang)) ||
+        voices.find((v) => v.lang.startsWith(selectedLang.split('-')[0])) ||
         voices.find((v) => v.lang === 'en-US') ||
-        voices.find((v) => v.lang.startsWith('en-US')) ||
-        voices.find((v) => v.lang.startsWith('en')) ||
         voices[0];
 
       if (voice) currentUtterance.voice = voice;
@@ -1598,6 +1610,16 @@
         setTimeout(connectSocket, 500);
       };
       ws.onerror = () => { try { ws.close(); } catch { } };
+    }
+
+    // Global language select initialization
+    const savedLang = localStorage.getItem('__stts__lang') || 'en-US';
+    const langSelect = document.getElementById('global-lang-select');
+    if (langSelect) {
+      langSelect.value = savedLang;
+      langSelect.onchange = () => {
+        localStorage.setItem('__stts__lang', langSelect.value);
+      };
     }
 
     connectSocket();
