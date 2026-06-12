@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { copyFileSync, mkdirSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, rmSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const outdir = 'dist';
@@ -24,6 +24,15 @@ await build({
 
 for (const html of ['stts_ui.html']) {
   copyFileSync(path.join('src', html), path.join(outdir, html));
+}
+
+const srcImgDir = path.join('src', 'img');
+const distImgDir = path.join(outdir, 'img');
+if (existsSync(srcImgDir)) {
+  mkdirSync(distImgDir, { recursive: true });
+  for (const imgFile of readdirSync(srcImgDir)) {
+    copyFileSync(path.join(srcImgDir, imgFile), path.join(distImgDir, imgFile));
+  }
 }
 
 console.log('Build complete: dist/stts.mjs, dist/stts-mcp-server.mjs, dist/stts-daemon.mjs');

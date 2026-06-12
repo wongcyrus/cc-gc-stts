@@ -113,6 +113,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && url.pathname.startsWith('/img/')) {
+    const fileName = path.basename(url.pathname);
+    const filePath = path.resolve(__dirname, 'img', fileName);
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filePath).toLowerCase();
+      let contentType = 'application/octet-stream';
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.gif') contentType = 'image/gif';
+      else if (ext === '.ico') contentType = 'image/x-icon';
+
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(fs.readFileSync(filePath));
+      return;
+    }
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/ping') {
     res.writeHead(200);
     res.end('ok');
